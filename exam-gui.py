@@ -7,12 +7,12 @@ from itertools import cycle
 angle = 0
 idx = 50
 dataRecord = {'0':{'date':'20 Jan 21', 'mesh':'data/afinese_antes.ply'},
-              '1':{'date':'20 Jan 21', 'mesh':'data/afinese_depois.ply'},
-              '2':{'date':'20 Jan 21', 'mesh':'data/afinese_antes.ply'},
-              '3':{'date':'20 Jan 21', 'mesh':'data/afinese_depois.ply'}}
+              '1':{'date':'19 Jan 21', 'mesh':'data/afinese_depois.ply'},
+              '2':{'date':'18 Jan 21', 'mesh':'data/afinese_antes.ply'},
+              '3':{'date':'17 Jan 21', 'mesh':'data/afinese_depois.ply'}}
 
 beforeIdx = list(dataRecord.keys())
-afterIdx = list(dataRecord.keys())[::-1]
+afterIdx = list(dataRecord.keys())
 plt = vedo.Plotter(bg='k', sharecam=False, size='fullscreen')
 
 #%%
@@ -59,7 +59,7 @@ for key in dataRecord.keys():
     dataRecord[key]['data']['mslice'] = getSlices(dataRecord[key]['data']['mesh'])
     
 beforeIdx = rotate(beforeIdx, -1)
-afterIdx = rotate(afterIdx, -1)
+afterIdx = rotate(afterIdx, 0)
 vmesh1 = dataRecord[beforeIdx[0]]['data']['mesh'].clone() # Antes
 vmesh2 = dataRecord[afterIdx[0]]['data']['mesh'].clone() # Depois
 plt.show((vmesh1, vmesh2), resetcam=True, interactive=False, mode=9, zoom=.8, )
@@ -118,7 +118,7 @@ def addAngle(event):
     plt.render()
 
 def slider(widget, event):
-    global idx, contour1, contour2, slice2D1, slice2D2, angle, textBefore, textAfter, textRatio
+    global idx, contour1, contour2, slice2D1, slice2D2, textBefore, textAfter, textRatio
     idx = int(widget.GetRepresentation().GetValue())
     
     plt.remove(contour1+contour2+slice2D1+slice2D2+[textBefore,textAfter,textRatio])
@@ -141,57 +141,49 @@ def keyfunc(evt):
         plt.close()  
 
 def updateMeshBefore():
-    global vmesh1, mslices1, contour1, slice2D1, textDateBefore
+    global vmesh1, mslice1, contour1, slice2D1, slice2D2, textDateBefore, textBefore, textAfter, textRatio
+    plt.remove([vmesh1, textDateBefore, textBefore, textAfter, textRatio]+contour1+slice2D1+slice2D2)
     textDateBefore = vedo.Text2D(dataRecord[beforeIdx[0]]['date'], font='Comae', pos=(0.375,0.9), justify='center')
     vmesh1 = dataRecord[beforeIdx[0]]['data']['mesh'].clone()
     mslices1 = dataRecord[beforeIdx[0]]['data']['mslice']
     contour1 = getContour(mslices=mslices1, dx=-500, color='red', idx=idx)
     slice2D1 = getSlice2D(mslices=mslices1, x=1000, color='red', idx=idx)
     vmesh1.x(-500)
+    rotateMeshesBefore(dtheta=angle)
+    setLengthText()
+    plt.add([vmesh1, textDateBefore, textBefore, textAfter, textRatio]+contour1+slice2D1+slice2D2)
     
 def btnPrevBefore():
-    global beforeIdx, vmesh1, mslice1, contour1, slice2D1, slice2D2, textDateBefore, textBefore, textAfter, textRatio
+    global beforeIdx
     beforeIdx = rotate(beforeIdx, 1)
-    plt.remove([vmesh1, textDateBefore]+contour1+slice2D1+slice2D2+[textBefore,textAfter,textRatio])
     updateMeshBefore()
-    rotateMeshesBefore(dtheta=angle)
-    setLengthText()
-    plt.add([vmesh1, textDateBefore]+contour1+slice2D1+slice2D2+[textBefore,textAfter,textRatio])
     
 def btnNextBefore():
-    global beforeIdx, vmesh1, mslice1, contour1, slice2D1, slice2D2, textDateBefore, textBefore, textAfter, textRatio
+    global beforeIdx
     beforeIdx = rotate(beforeIdx, -1)
-    plt.remove([vmesh1, textDateBefore]+contour1+slice2D1+slice2D2+[textBefore, textAfter, textRatio])
     updateMeshBefore()
-    rotateMeshesBefore(dtheta=angle)
-    setLengthText()
-    plt.add([vmesh1, textDateBefore]+contour1+slice2D1+slice2D2+[textBefore, textAfter, textRatio])
-
+    
 def updateMeshAfter():
-    global vmesh2, mslices2, contour2, slice2D2, textDateAfter
+    global vmesh2, mslice2, contour2, slice2D1, slice2D2, textDateAfter, textBefore, textAfter, textRatio
+    plt.remove([vmesh2, textDateAfter, textBefore, textAfter, textRatio]+contour2+slice2D2+slice2D1)
     textDateAfter = vedo.Text2D(dataRecord[afterIdx[0]]['date'], font='Comae', pos=(0.125,0.9), justify='center')
     vmesh2 = dataRecord[afterIdx[0]]['data']['mesh'].clone()
     mslices2 = dataRecord[afterIdx[0]]['data']['mslice']
     contour2 = getContour(mslices=mslices2, dx=-1500, color='grey', idx=idx)
     slice2D2 = getSlice2D(mslices=mslices2, x=1000, color='grey', idx=idx)
     vmesh2.x(-1500)
+    rotateMeshesAfter(dtheta=angle)
+    plt.add([vmesh2, textDateAfter, textBefore, textAfter, textRatio]+contour2+slice2D1+slice2D2)
     
 def btnPrevAfter():
-    global afterIdx, vmesh2, mslice2, contour2, slice2D1, slice2D2, textDateAfter, textBefore, textAfter, textRatio
+    global afterIdx
     afterIdx = rotate(afterIdx, 1)
-    plt.remove([vmesh2, textDateAfter]+contour2+slice2D2+slice2D1+[textBefore, textAfter, textRatio])
     updateMeshAfter()
-    rotateMeshesAfter(dtheta=angle)
-    plt.add([vmesh2, textDateAfter]+contour2+slice2D1+slice2D2+[textBefore, textAfter, textRatio])
     
 def btnNextAfter():
-    global afterIdx, vmesh2, mslice2, contour2, slice2D1, slice2D2, textDateAfter, textBefore, textAfter, textRatio
+    global afterIdx
     afterIdx = rotate(afterIdx, -1)
-    plt.remove([vmesh2, textDateAfter]+contour2+slice2D2+slice2D1+[textBefore, textAfter, textRatio])
     updateMeshAfter()
-    rotateMeshesAfter(dtheta=angle)
-    setLengthText()
-    plt.add([vmesh2, textDateAfter]+contour2+slice2D1+slice2D2+[textBefore, textAfter, textRatio])
 
 plt.addButton(btnPrevAfter, pos=(0.05, 0.90), states=["<"], c=["w"], bc=['none'], font="courier", size=22)
 plt.addButton(btnNextAfter, pos=(0.20, 0.90), states=[">"], c=["w"], bc=['none'], font="courier", size=22)
